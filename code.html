@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BOLT Score Tracker</title>
+<style>
+:root{--bg:#eaf4f2;--card:#fff;--ink:#12292b;--mute:#5d7274;--line:#d5e3e0;--accent:#0f8b7d;--accent2:#5fd0c0;--accent-ink:#fff;--red:#e0574b;--amber:#e3a21a;--green:#27a85f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1617;--card:#14272a;--ink:#e8f2f0;--mute:#93aaa8;--line:#2a4245;--accent:#3cc4b2;--accent2:#1d6f66;--accent-ink:#06201d;--red:#ff7a6e;--amber:#f0b84a;--green:#4cd185;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1617;--card:#14272a;--ink:#e8f2f0;--mute:#93aaa8;--line:#2a4245;--accent:#3cc4b2;--accent2:#1d6f66;--accent-ink:#06201d;--red:#ff7a6e;--amber:#f0b84a;--green:#4cd185;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:linear-gradient(180deg,var(--bg),var(--card));color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;padding:16px;min-height:100vh}
+.app{width:100%;max-width:440px}
+h1{font-size:22px;margin:4px 0 2px;text-align:center}
+.sub{color:var(--mute);font-size:13px;text-align:center;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 4px 18px rgba(15,139,125,.08)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.tab{border:2px solid var(--line);border-radius:14px;padding:8px;background:transparent;color:var(--mute);cursor:pointer;text-align:left;font-family:inherit}
+.tab b{display:block;font-size:14px;color:var(--ink)}
+.tab small{font-size:11px}
+.tab.on{border-color:var(--accent);background:var(--bg)}
+.tab .sc{float:right;font-weight:700;color:var(--accent);font-size:15px}
+.steps{display:flex;justify-content:space-between;margin-bottom:12px;gap:4px}
+.step{flex:1;text-align:center;font-size:11px;color:var(--mute);line-height:1.2}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;transition:.25s}
+.step.on{color:var(--ink);font-weight:600}
+.step.on .dot{border-color:var(--accent);color:var(--accent)}
+.step.done .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.orb-wrap{display:flex;justify-content:center;margin:6px 0 10px}
+.orb{width:190px;height:190px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--accent2),var(--accent));display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--accent-ink);box-shadow:0 0 0 10px rgba(15,139,125,.12)}
+.orb.breathe{animation:br 8s ease-in-out infinite}
+.orb.hold{background:radial-gradient(circle at 35% 30%,#f59a90,var(--red));color:#fff;animation:none;box-shadow:0 0 0 10px rgba(224,87,75,.15)}
+@keyframes br{0%,100%{transform:scale(.82)}50%{transform:scale(1.05)}}
+.time{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums}
+.orb small{font-size:13px;opacity:.9}
+.msg{text-align:center;font-size:16px;font-weight:600;margin:0 0 4px}
+.hint{text-align:center;font-size:13px;color:var(--mute);margin:0 0 14px;min-height:36px}
+.big{width:100%;border:0;border-radius:16px;padding:18px;font-size:18px;font-weight:700;background:var(--accent);color:var(--accent-ink);cursor:pointer;font-family:inherit}
+.big.stop{background:var(--red);color:#fff}
+.big:active{transform:scale(.98)}
+.res{text-align:center}
+.emoji{font-size:44px;line-height:1}
+.tier{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:700;font-size:15px;color:#fff;margin:6px 0}
+.score{font-size:15px;margin:4px 0}
+.res p{margin:6px 0;font-size:14px;line-height:1.45}
+.scale{position:relative;height:12px;border-radius:99px;margin:18px 4px 4px;background:linear-gradient(90deg,var(--red) 0 33%,var(--amber) 33% 50%,#9bcf53 50% 67%,var(--green) 67%)}
+.pin{position:absolute;top:-6px;width:4px;height:24px;background:var(--ink);border-radius:2px;transform:translateX(-50%);transition:left .6s}
+.labels{display:flex;margin:0 4px;font-size:10px;color:var(--mute)}
+.labels span{text-align:center}
+.bohr{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;text-align:left;margin-top:10px}
+.cmp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+.cmp div{background:var(--bg);border-radius:12px;padding:10px 4px}
+.cmp small{display:block;color:var(--mute);font-size:11px;margin-bottom:2px}
+.cmp span{font-size:22px;font-weight:700}
+.cmp .up{color:var(--green)}.cmp .dn{color:var(--red)}
+.verdict{text-align:center;font-size:14px;margin:10px 0 0;font-weight:600}
+.link{background:none;border:0;color:var(--mute);font-size:12px;text-decoration:underline;cursor:pointer;display:block;margin:8px auto 0}
+.lbhead{text-align:center}.lbnum{font-size:40px;font-weight:800;color:var(--accent);line-height:1}.lbhead small{display:block;color:var(--mute);font-size:13px;margin-top:2px}.nick{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:15px;background:var(--bg);color:var(--ink);margin:12px 0 10px;font-family:inherit}.ltabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.ltab{border:0;border-radius:10px;padding:9px;font-size:13px;font-weight:600;background:var(--bg);color:var(--mute);cursor:pointer;font-family:inherit}.ltab.on{background:var(--accent);color:var(--accent-ink)}.lrow{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);font-size:15px}.lrow:last-child{border-bottom:0}.lrow.me{background:var(--bg);border-radius:10px}.lrow .rk{width:30px;font-size:18px;text-align:center}.lrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lrow .vl{font-weight:700;color:var(--accent)}.lempty{text-align:center;color:var(--mute);font-size:13px;padding:14px 0}.rankbox{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:12px;margin:12px 0 0;text-align:center;font-size:14px;line-height:1.5}.rankbox b{font-size:20px;display:block}.hide{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🫁 BOLT Score Tracker</h1>
+  <p class="sub">How long can you stay calm without breathing? Find out in under a minute.</p>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" id="tBefore"><span class="sc" id="tbS"></span><b>① Before</b><small>Take at the start</small></button>
+      <button class="tab" id="tAfter"><span class="sc" id="taS"></span><b>② After</b><small>Take at the end</small></button>
+    </div>
+    <div class="steps" id="steps">
+      <div class="step"><div class="dot">1</div>Normal<br>Breath</div>
+      <div class="step"><div class="dot">2</div>Pinch &amp;<br>Hold</div>
+      <div class="step"><div class="dot">3</div>First<br>Urge</div>
+      <div class="step"><div class="dot">4</div>Stop</div>
+    </div>
+    <div class="orb-wrap"><div class="orb breathe" id="orb"><div class="time" id="time">Ready</div><small id="orbSub">breathe with me</small></div></div>
+    <p class="msg" id="msg"></p>
+    <p class="hint" id="hint"></p>
+    <button class="big" id="btn">Start</button>
+  </div>
+
+  <div class="card res hide" id="res">
+    <div class="emoji" id="emoji"></div>
+    <div class="tier" id="tier"></div>
+    <div class="score" id="resScore"></div>
+    <p id="resText"></p>
+    <div class="scale"><div class="pin" id="pin"></div></div>
+    <div class="labels"><span style="width:33%">&lt;20s<br>High Stress</span><span style="width:17%">20–30<br>Average</span><span style="width:17%">30–40<br>Good</span><span style="width:33%">40s+<br>Optimal Calm</span></div>
+    <div class="rankbox hide" id="rankBox"></div>
+    <div class="bohr">💡 <b>Bohr Effect:</b> a little CO₂ in your blood helps haemoglobin hand oxygen to your cells. Higher tolerance = calmer body, better oxygen delivery.</div>
+  </div>
+
+  <div class="card">
+    <div class="cmp">
+      <div><small>Before</small><span id="sB">–</span></div>
+      <div><small>After</small><span id="sA">–</span></div>
+      <div><small>Change</small><span id="sD">–</span></div>
+    </div>
+    <p class="verdict" id="verdict"></p>
+    <button class="link" id="reset">Reset my scores</button>
+  </div>
+
+  <div class="card">
+    <div class="lbhead"><div class="lbnum" id="lbCount">–</div><small>people have tracked their score</small></div>
+    <div class="rankbox hide" id="myRank"></div>
+    <input class="nick" id="nick" maxlength="20" placeholder="Your name on the leaderboard">
+    <div class="ltabs"><button class="ltab on" id="lTop">🏆 Top scores</button><button class="ltab" id="lImp">📈 Most improved</button></div>
+    <div id="lbList"></div>
+    <p class="lempty" id="lbNote"></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY='bolt-scores', scores={before:null,after:null}, mode='before';
+  var step=0,t0=0,raf=0,running=false;
+  var $=function(i){return document.getElementById(i)};
+  var dots=document.querySelectorAll('.step');
+  try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)scores=s;}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(scores));}catch(e){} sync();if(typeof showRank==='function')showRank();}
+  if(scores.before!=null&&scores.after==null)mode='after';
+
+  function tierOf(t){
+    if(t<20)return{n:'High Stress',c:'var(--red)',e:'😮‍💨',d:'Your body is very sensitive to CO₂, which often goes with fast, shallow breathing. Slow nasal breathing can help.',p:Math.min(t/20,1)*33};
+    if(t<30)return{n:'Average',c:'var(--amber)',e:'🙂',d:'A typical result. Daily slow breathing can push this higher.',p:33+(t-20)/10*17};
+    if(t<40)return{n:'Good',c:'#6fae2e',e:'😊',d:'Solid tolerance. You are close to the optimal calm zone.',p:50+(t-30)/10*17};
+    return{n:'Optimal Calm',c:'var(--green)',e:'😌',d:'Excellent. A sign of a calm, well-regulated breathing pattern.',p:Math.min(67+(t-40)/20*33,98)};
+  }
+
+  function render(){
+    dots.forEach(function(e,i){
+      var done=(step===1&&i===0)||(step===3),on=(step===0&&i===0)||(step===1&&i===1);
+      e.className='step'+(done?' done':'')+(on?' on':'');
+    });
+    var o=$('orb'),b=$('btn');
+    if(step===0){
+      o.className='orb breathe';$('time').textContent='Ready';$('orbSub').textContent='breathe with me';
+      $('msg').textContent='Step 1: Breathe normally';
+      $('hint').textContent=mode==='before'?'Relax and breathe through your nose for a few breaths. Tap Start after a normal exhale.':'Relax again for a few breaths, then tap Start after a normal exhale.';
+      b.textContent='Start the timer';b.className='big';
+    }else if(step===1){
+      o.className='orb hold';$('orbSub').textContent='seconds';
+      $('msg').textContent='Step 2: Pinch your nose & hold';
+      $('hint').textContent='Tap STOP the moment you feel the first urge to breathe. Do not push too hard.';
+      b.textContent='STOP · First Urge';b.className='big stop';
+    }else{
+      o.className='orb';$('orbSub').textContent='seconds';
+      $('msg').textContent='Step 4: Release and breathe normally';
+      $('hint').textContent='';
+      b.textContent=(mode==='before'&&scores.after==null)?'Done · come back for After':'Test again';b.className='big';
+    }
+    $('tBefore').className='tab'+(mode==='before'?' on':'');
+    $('tAfter').className='tab'+(mode==='after'?' on':'');
+    var B=scores.before,A=scores.after;
+    $('tbS').textContent=B==null?'':B.toFixed(1)+'s';
+    $('taS').textContent=A==null?'':A.toFixed(1)+'s';
+    $('sB').textContent=B==null?'–':B.toFixed(1)+'s';
+    $('sA').textContent=A==null?'–':A.toFixed(1)+'s';
+    var d=$('sD');d.className='';
+    if(B!=null&&A!=null){
+      var x=A-B;d.textContent=(x>=0?'+':'')+x.toFixed(1)+'s';d.className=x>0?'up':x<0?'dn':'';
+      $('verdict').textContent=x>0?'🎉 Your CO₂ tolerance improved!':x<0?'Slightly lower this time. It varies, try once more.':'No change this time.';
+    }else{d.textContent='–';$('verdict').textContent=B==null?'Take your Before test to begin.':'Now enjoy the session, then take the After test.';}
+  }
+
+  function tick(){$('time').textContent=((performance.now()-t0)/1000).toFixed(1);raf=requestAnimationFrame(tick);}
+
+  $('btn').onclick=function(){
+    if(step===0){step=1;running=true;t0=performance.now();$('res').className='card res hide';raf=requestAnimationFrame(tick);}
+    else if(step===1){
+      var t=(performance.now()-t0)/1000;
+      cancelAnimationFrame(raf);running=false;step=3;
+      $('time').textContent=t.toFixed(1);
+      var r=tierOf(t);scores[mode]=t;save();
+      $('emoji').textContent=r.e;$('tier').textContent=r.n;$('tier').style.background=r.c;
+      $('resScore').innerHTML='<b>'+(mode==='before'?'Before':'After')+' score: '+t.toFixed(1)+' seconds</b>';
+      $('resText').textContent=r.d;$('pin').style.left=r.p+'%';
+      $('res').className='card res';
+      if(mode==='before'&&scores.after==null){mode='after';}
+    }else{step=0;$('res').className='card res hide';}
+    render();
+  };
+  function setMode(m){if(running)return;mode=m;step=0;$('res').className='card res hide';render();}
+  $('tBefore').onclick=function(){setMode('before')};
+  $('tAfter').onclick=function(){setMode('after')};
+  $('reset').onclick=function(){if(running)return;try{if(db&&myId)db.collection('scores').doc(myId).delete().catch(function(){});}catch(e){}scores={before:null,after:null};save();mode='before';step=0;$('res').className='card res hide';render();};
+  var db=null,myId=null,rows=[],board='top',NK='bolt-nick';
+  try{$('nick').value=localStorage.getItem(NK)||'';}catch(e){}
+  function sync(){
+    if(!db||!myId||(scores.before==null&&scores.after==null))return;
+    try{db.collection('scores').doc(myId).set({name:($('nick').value||'').trim().slice(0,20)||'Guest',before:scores.before,after:scores.after,ts:Date.now()}).catch(function(){});}catch(e){}
+  }
+  $('nick').onchange=function(){try{localStorage.setItem(NK,$('nick').value);}catch(e){}sync();};
+  function best(r){var a=[r.before,r.after].filter(function(v){return typeof v==='number'});return a.length?Math.max.apply(null,a):null;}
+  function renderBoard(){
+    var list=rows.filter(function(r){return best(r)!=null});
+    $('lbCount').textContent=list.length;
+    var items=[];
+    if(board==='top'){
+      items=list.map(function(r){return{r:r,v:best(r),t:best(r).toFixed(1)+'s'}}).sort(function(a,b){return b.v-a.v});
+    }else{
+      items=list.filter(function(r){return typeof r.before==='number'&&typeof r.after==='number'}).map(function(r){var d=r.after-r.before;return{r:r,v:d,t:(d>=0?'+':'')+d.toFixed(1)+'s'}}).sort(function(a,b){return b.v-a.v});
+    }
+    var box=$('lbList');box.textContent='';
+    items.slice(0,10).forEach(function(it,i){
+      var row=document.createElement('div');row.className='lrow'+(it.r.id===myId?' me':'');
+      var rk=document.createElement('span');rk.className='rk';rk.textContent=['🥇','🥈','🥉'][i]||(i+1);
+      var nm=document.createElement('span');nm.className='nm';nm.textContent=(it.r.name||'Guest')+(it.r.id===myId?' (you)':'');
+      var vl=document.createElement('span');vl.className='vl';vl.textContent=it.t;
+      row.appendChild(rk);row.appendChild(nm);row.appendChild(vl);box.appendChild(row);
+    });
+    $('lbNote').textContent=items.length?'':(board==='top'?'No scores yet. Be the first!':'Needs both a Before and an After score.');showRank();
+  }
+  function showRank(){
+    var els=[$('rankBox'),$('myRank')];
+    function hide(){els.forEach(function(e){e.className='rankbox hide';});}
+    if(!db||!myId||(scores.before==null&&scores.after==null)){hide();return;}
+    var me={id:myId,before:scores.before,after:scores.after};
+    var list=rows.filter(function(r){return r.id!==myId}).concat([me]).filter(function(r){return best(r)!=null});
+    var n=list.length,mb=best(me);
+    var rank=1+list.filter(function(r){return r.id!==myId&&best(r)>mb}).length;
+    var zone=tierOf(mb).n;
+    var same=list.filter(function(r){return tierOf(best(r)).n===zone}).length;
+    var lines=[];
+    lines.push('<b>#'+rank+' of '+n+'</b>You are in the top '+Math.max(1,Math.ceil(rank/n*100))+'% of everyone who tracked');
+    lines.push(same+' of '+n+' people are in your zone ('+zone+')');
+    if(typeof me.before==='number'&&typeof me.after==='number'){
+      var both=list.filter(function(r){return typeof r.before==='number'&&typeof r.after==='number'});
+      var md=me.after-me.before;
+      var ir=1+both.filter(function(r){return r.id!==myId&&(r.after-r.before)>md}).length;
+      lines.push('Improvement rank: #'+ir+' of '+both.length);
+    }
+    els.forEach(function(e){e.innerHTML=lines.map(function(l,i){return i===0?'<div>'+l+'</div>':'<div>'+l+'</div>';}).join('');e.className='rankbox';});
+  }
+  function offline(){db=null;showRank();$('lbCount').textContent='–';$('lbList').textContent='';$('lbNote').textContent='The live leaderboard needs you to be signed in to Claude. Your own score still works.';}
+  $('lTop').onclick=function(){board='top';$('lTop').className='ltab on';$('lImp').className='ltab';renderBoard();};
+  $('lImp').onclick=function(){board='imp';$('lImp').className='ltab on';$('lTop').className='ltab';renderBoard();};
+  (async function(){
+    try{
+      if(!window.claude||!window.claude.use){offline();return;}
+      var u=await window.claude.use('user'),d=await window.claude.use('db');
+      if(!u||!d){offline();return;}
+      myId=await u.id();db=d;
+      var timer=setTimeout(offline,10000);
+      db.collection('scores').onSnapshot(function(s){clearTimeout(timer);rows=s.docs.map(function(x){var o=x.data()||{};o.id=x.id;return o;});renderBoard();},function(){clearTimeout(timer);offline();});
+      sync();
+    }catch(e){offline();}
+  })();
+  render();
+})();
+</script>
+</body>
+</html>
