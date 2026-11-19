@@ -58,6 +58,9 @@ h1{font-size:22px;margin:4px 0 2px;text-align:center}
 .link{background:none;border:0;color:var(--mute);font-size:12px;text-decoration:underline;cursor:pointer;display:block;margin:8px auto 0}
 .lbhead{text-align:center}.lbnum{font-size:40px;font-weight:800;color:var(--accent);line-height:1}.lbhead small{display:block;color:var(--mute);font-size:13px;margin-top:2px}.nick{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-size:15px;background:var(--bg);color:var(--ink);margin:12px 0 10px;font-family:inherit}.ltabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.ltab{border:0;border-radius:10px;padding:9px;font-size:13px;font-weight:600;background:var(--bg);color:var(--mute);cursor:pointer;font-family:inherit}.ltab.on{background:var(--accent);color:var(--accent-ink)}.lrow{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid var(--line);font-size:15px}.lrow:last-child{border-bottom:0}.lrow.me{background:var(--bg);border-radius:10px}.lrow .rk{width:30px;font-size:18px;text-align:center}.lrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lrow .vl{font-weight:700;color:var(--accent)}.lempty{text-align:center;color:var(--mute);font-size:13px;padding:14px 0}.rankbox{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:12px;margin:12px 0 0;text-align:center;font-size:14px;line-height:1.5}.rankbox b{font-size:20px;display:block}.hide{display:none}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -114,6 +117,15 @@ h1{font-size:22px;margin:4px 0 2px;text-align:center}
 
 <script>
 (function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzhks1FEVM_o7qrh6MrVOIW_7_Z8C6tD4",
+    authDomain: "bolt-score-tracker.firebaseapp.com",
+    projectId: "bolt-score-tracker",
+    storageBucket: "bolt-score-tracker.firebasestorage.app",
+    messagingSenderId: "1085417114608",
+    appId: "1:1085417114608:web:6483e459f94cef18c46b35"
+  };
+
   var KEY='bolt-scores', scores={before:null,after:null}, mode='before';
   var step=0,t0=0,raf=0,running=false;
   var $=function(i){return document.getElementById(i)};
@@ -232,19 +244,25 @@ h1{font-size:22px;margin:4px 0 2px;text-align:center}
       var ir=1+both.filter(function(r){return r.id!==myId&&(r.after-r.before)>md}).length;
       lines.push('Improvement rank: #'+ir+' of '+both.length);
     }
-    els.forEach(function(e){e.innerHTML=lines.map(function(l,i){return i===0?'<div>'+l+'</div>':'<div>'+l+'</div>';}).join('');e.className='rankbox';});
+    els.forEach(function(e){e.innerHTML=lines.map(function(l){return '<div>'+l+'</div>';}).join('');e.className='rankbox';});
   }
-  function offline(){db=null;showRank();$('lbCount').textContent='–';$('lbList').textContent='';$('lbNote').textContent='The live leaderboard needs you to be signed in to Claude. Your own score still works.';}
+  function offline(){db=null;showRank();$('lbCount').textContent='–';$('lbList').textContent='';$('lbNote').textContent='Leaderboard offline. Check Firebase setup.';}
   $('lTop').onclick=function(){board='top';$('lTop').className='ltab on';$('lImp').className='ltab';renderBoard();};
   $('lImp').onclick=function(){board='imp';$('lImp').className='ltab on';$('lTop').className='ltab';renderBoard();};
+
   (async function(){
     try{
-      if(!window.claude||!window.claude.use){offline();return;}
-      var u=await window.claude.use('user'),d=await window.claude.use('db');
-      if(!u||!d){offline();return;}
-      myId=await u.id();db=d;
+      if(!window.firebase){offline();return;}
+      if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      var cred=await firebase.auth().signInAnonymously();
+      myId=cred.user.uid;
+      db=firebase.firestore();
       var timer=setTimeout(offline,10000);
-      db.collection('scores').onSnapshot(function(s){clearTimeout(timer);rows=s.docs.map(function(x){var o=x.data()||{};o.id=x.id;return o;});renderBoard();},function(){clearTimeout(timer);offline();});
+      db.collection('scores').onSnapshot(function(s){
+        clearTimeout(timer);
+        rows=s.docs.map(function(x){var o=x.data()||{};o.id=x.id;return o;});
+        renderBoard();
+      },function(){clearTimeout(timer);offline();});
       sync();
     }catch(e){offline();}
   })();
